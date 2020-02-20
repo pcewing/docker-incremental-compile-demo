@@ -1,5 +1,6 @@
 workspace "MyApp"
-    location "build"
+   location "build"
+   cppdialect "C++11"
    configurations { "Debug", "Release" }
 
 project "MyApp"
