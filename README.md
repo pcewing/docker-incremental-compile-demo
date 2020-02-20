@@ -21,10 +21,10 @@ Rather than having a single Docker image, we have three:
   between build-time and run-time
 * myapp-builder : An image based on the *myapp-base* image that also contains
   all build dependencies for compiling and linking the *MyApp* application,
-  such library headers, and the GCC toolchain
-* myapp-builder : An image based on the *myapp-base* image that also contains
-  all run-time dependencies of MyApp, such as the non-root user the application
-  should run as
+  such as library headers and the GCC toolchain
+* myapp : An image based on the *myapp-base* image that also contains all
+  run-time dependencies of MyApp, such as the creation of the non-root user the
+  application should be run as
 
 The general workflow will be:
 
