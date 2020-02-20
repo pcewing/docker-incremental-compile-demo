@@ -4,18 +4,10 @@ This repository demonstrates *one* way to accomplish incrementally compiling
 and packaging a C/C++ application in Docker. **Premake** is used in this demo
 to automatically generate makefiles that support incremental compilation.
 
-**NOTE:** This approach intentionally does **not** take advantage of
-multi-stage builds. Multi-stage builds do allow sub-sequent stages to reuse
-artifacts from previous stages via `COPY --from`; however, there are
-difficulties when trying to reuse artifacts from previous builds. For more
-information on that, see the **Building Incrementally** section in the
-following article:
-
-https://medium.com/swlh/incremental-docker-builds-for-monolithic-codebases-2dae3ea950e
-
 ## Concepts
 
-Rather than having a single Docker image, we have three:
+Rather than having a single Docker image, we use a multistage build to create
+three:
 
 * myapp-base : A base image that contains the dependencies that are shared
   between build-time and run-time
@@ -28,8 +20,9 @@ Rather than having a single Docker image, we have three:
 
 The general workflow will be:
 
-* Build the base image
-* Build the builder image
+* Build the base and builder images
+    * We can build just these two images by specifying a target when executing
+      our first `docker image build` command
 * Use the builder image to compile and link the *MyApp* application
     * By passing in the working directory as a volume, we can effectively
       extract all of the build artifacts back to the host
@@ -38,16 +31,11 @@ The general workflow will be:
 
 ## Walkthrough
 
-First, build the *base* image:
+First, build the *builder* image which will also implicitly build the *base*
+image:
 
 ```bash
-docker image build -t myapp-base -f myapp-base.Dockerfile .
-```
-
-Next, build the *builder* image:
-
-```bash
-docker image build -t myapp-builder -f myapp-builder.Dockerfile .
+docker image build -t myapp-builder --target myapp-builder .
 ```
 
 Remove any pre-existing build directory on the host:
@@ -71,7 +59,7 @@ Ensure the build directory now exists and the artifacts in it have the correct
 ownership:
 
 ```bash
-ls -a ./build
+ls -la ./build
 ```
 
 Try running the same command as before to build the application:
@@ -93,7 +81,7 @@ Once the application is built, bake it into a docker container image by
 building the *myapp* image:
 
 ```bash
-docker image build -t myapp -f myapp.Dockerfile .
+docker image build -t myapp --target myapp .
 ```
 
 Finally, verify that we can run the *myapp* container image:
