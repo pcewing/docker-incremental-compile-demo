@@ -1,8 +1,42 @@
 # Incremental Builds in Docker
 
-This repository demonstrates one way to accomplish incrementally compiling and
-packaging a C/C++ application in Docker. Note that this method does not take
-advantage of multi-stage builds.
+This repository demonstrates *one* way to accomplish incrementally compiling
+and packaging a C/C++ application in Docker. **Premake** is used in this demo
+to automatically generate makefiles that support incremental compilation.
+
+**NOTE:** This approach intentionally does **not** take advantage of
+multi-stage builds. Multi-stage builds do allow sub-sequent stages to reuse
+artifacts from previous stages via `COPY --from`; however, there are
+difficulties when trying to reuse artifacts from previous builds. For more
+information on that, see the **Building Incrementally** section in the
+following article:
+
+https://medium.com/swlh/incremental-docker-builds-for-monolithic-codebases-2dae3ea950e
+
+## Concepts
+
+Rather than having a single Docker image, we have three:
+
+* myapp-base : A base image that contains the dependencies that are shared
+  between build-time and run-time
+* myapp-builder : An image based on the *myapp-base* image that also contains
+  all build dependencies for compiling and linking the *MyApp* application,
+  such library headers, and the GCC toolchain
+* myapp-builder : An image based on the *myapp-base* image that also contains
+  all run-time dependencies of MyApp, such as the non-root user the application
+  should run as
+
+The general workflow will be:
+
+* Build the base image
+* Build the builder image
+* Use the builder image to compile and link the *MyApp* application
+    * By passing in the working directory as a volume, we can effectively
+      extract all of the build artifacts back to the host
+* Build the myapp image
+    * Copy in the pre-built artifacts via the `ADD` directive
+
+## Walkthrough
 
 First, build the *base* image:
 
